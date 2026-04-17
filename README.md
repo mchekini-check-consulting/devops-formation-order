@@ -60,33 +60,6 @@ http://127.0.0.1:8000/api/docs/
 | `.env.local` | Développement local | SQLite |
 | `.env.prod` | Docker / Production | PostgreSQL |
 
-Les fichiers `.env` ne sont pas versionnés. Créer les fichiers à partir des exemples ci-dessous.
-
-### .env.local
-
-```
-DJANGO_SECRET_KEY=dev-secret-key-local
-DJANGO_DEBUG=True
-DJANGO_ALLOWED_HOSTS=*
-DATABASE_ENGINE=sqlite3
-CORS_ALLOW_ALL_ORIGINS=True
-```
-
-### .env.prod
-
-```
-DJANGO_SECRET_KEY=your-secret-key
-DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
-DATABASE_ENGINE=postgresql
-POSTGRES_DB=orders_db
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_HOST=db
-POSTGRES_PORT=5432
-CORS_ALLOWED_ORIGINS=http://localhost:3000
-```
-
 ## Structure du projet
 
 ```
