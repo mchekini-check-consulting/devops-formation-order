@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    command: >
+      sh -c "python manage.py migrate && gunicorn config.wsgi:application --bind 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.prod
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
