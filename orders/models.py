@@ -1,4 +1,5 @@
 import uuid
+from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -19,5 +20,5 @@ class OrderItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     product_id = models.CharField(max_length=255)
-    quantity = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)

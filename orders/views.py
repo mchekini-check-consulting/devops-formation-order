@@ -1,4 +1,4 @@
-from rest_framework import mixins, viewsets, status
+from rest_framework import mixins, viewsets
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiExample, OpenApiResponse
 from .models import Order
 from .serializers import OrderSerializer
@@ -100,4 +100,3 @@ ERROR_404_EXAMPLE = OpenApiExample(
 class OrderViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = Order.objects.prefetch_related("items").all()
     serializer_class = OrderSerializer
-    lookup_field = "pk"

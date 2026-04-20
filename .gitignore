@@ -8,9 +8,6 @@ env/
 .venv/
 ENV/
 
-*.sqlite3
-*.sqlite3-journal
-
 .env
 
 .vscode/

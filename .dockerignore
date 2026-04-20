@@ -8,8 +8,6 @@ venv
 env
 ENV
 
-*.sqlite3
-
 .git
 .gitignore
 
