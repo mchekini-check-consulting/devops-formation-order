@@ -3,6 +3,15 @@ from rest_framework import serializers
 from .models import Order, OrderItem
 
 
+class OrderStatusSerializer(serializers.ModelSerializer):
+    status = serializers.ChoiceField(choices=Order.Status.choices, help_text="Statut de la commande : CREATED, PAID ou FAILED")
+
+    class Meta:
+        model = Order
+        fields = ["id", "user_id", "total_price", "status", "created_at"]
+        read_only_fields = ["id", "user_id", "total_price", "created_at"]
+
+
 class OrderItemSerializer(serializers.ModelSerializer):
     product_id = serializers.CharField(help_text="Identifiant unique du produit")
     quantity = serializers.IntegerField(help_text="Nombre d'unités commandées", min_value=1)

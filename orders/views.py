@@ -1,7 +1,7 @@
 from rest_framework import mixins, viewsets
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiExample, OpenApiResponse
 from .models import Order
-from .serializers import OrderSerializer
+from .serializers import OrderSerializer, OrderStatusSerializer
 
 
 ORDER_REQUEST_EXAMPLE = OpenApiExample(
@@ -61,6 +61,24 @@ ERROR_404_EXAMPLE = OpenApiExample(
     status_codes=["404"],
 )
 
+PATCH_STATUS_EXAMPLE = OpenApiExample(
+    "Passer en PAID",
+    value={"status": "PAID"},
+    request_only=True,
+)
+
+PATCH_RESPONSE_EXAMPLE = OpenApiExample(
+    "Commande mise à jour",
+    value={
+        "id": "c7fd3b1e-5e55-460d-8418-6ce8a7e98b2c",
+        "user_id": "user-123",
+        "total_price": 69.97,
+        "status": "PAID",
+        "created_at": "2026-04-17T15:52:21.596297Z",
+    },
+    response_only=True,
+)
+
 
 @extend_schema_view(
     create=extend_schema(
@@ -96,7 +114,26 @@ ERROR_404_EXAMPLE = OpenApiExample(
             404: OpenApiResponse(description="Commande introuvable"),
         },
     ),
+    partial_update=extend_schema(
+        tags=["Commandes"],
+        summary="Modifier le statut d'une commande",
+        description="Met à jour le statut d'une commande (CREATED, PAID, FAILED).",
+        request=OrderStatusSerializer,
+        examples=[PATCH_STATUS_EXAMPLE, PATCH_RESPONSE_EXAMPLE, ERROR_404_EXAMPLE],
+        responses={
+            200: OpenApiResponse(response=OrderStatusSerializer, description="Commande mise à jour"),
+            400: OpenApiResponse(description="Statut invalide"),
+            404: OpenApiResponse(description="Commande introuvable"),
+        },
+    ),
 )
-class OrderViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class OrderViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
     queryset = Order.objects.prefetch_related("items").all()
     serializer_class = OrderSerializer
+
+    def get_serializer_class(self):
+        if self.action == "partial_update":
+            return OrderStatusSerializer
+        return OrderSerializer
+
+    http_method_names = ["get", "post", "patch", "head", "options"]
