@@ -29,3 +29,11 @@ htmlcov/
 *.egg-info/
 dist/
 build/
+
+
+### npm  ###
+node_modules
+node_modules/
+/node_modules/
+node_modules/**
+package-lock.json
