@@ -5,7 +5,7 @@ Microservice de gestion des commandes pour une application e-commerce.
 ## Stack
 
 - Python / Django / Django REST Framework
-- PostgreSQL (Docker) / SQLite (local)
+- PostgreSQL
 - Docker + Docker Compose
 - Swagger (drf-spectacular)
 
@@ -13,11 +13,12 @@ Microservice de gestion des commandes pour une application e-commerce.
 
 | Méthode | URL | Description | Code succès |
 |---------|-----|-------------|-------------|
-| POST | `/orders/` | Créer une commande | 201 |
-| GET | `/orders/` | Lister les commandes | 200 |
-| GET | `/orders/<uuid>/` | Détail d'une commande | 200 |
+| POST | `/api/orders` | Créer une commande | 201 |
+| GET | `/api/orders` | Lister les commandes | 200 |
+| GET | `/api/orders/<uuid>` | Détail d'une commande | 200 |
+| PATCH | `/api/orders/<uuid>` | Modifier le statut | 200 |
 
-### Payload POST /orders/
+### Payload POST /api/orders
 
 ```json
 {
@@ -26,6 +27,14 @@ Microservice de gestion des commandes pour une application e-commerce.
     { "product_id": "prod-1", "quantity": 2, "unit_price": 29.99 },
     { "product_id": "prod-2", "quantity": 1, "unit_price": 9.99 }
   ]
+}
+```
+
+### Payload PATCH /api/orders/<uuid>
+
+```json
+{
+  "status": "PAID"
 }
 ```
 
@@ -40,6 +49,13 @@ python manage.py runserver
 ```
 
 L'API est disponible sur http://127.0.0.1:8000
+
+Insérer des données de test (serveur lancé) :
+
+```bash
+chmod +x seed.sh
+./seed.sh
+```
 
 ## Lancement avec Docker
 
@@ -57,8 +73,8 @@ http://127.0.0.1:8000/api/docs/
 
 | Fichier | Environnement | Base de données |
 |---------|---------------|-----------------|
-| `.env.local` | Développement local | SQLite |
-| `.env.prod` | Docker / Production | PostgreSQL |
+| `.env.local` | Développement local | PostgreSQL (localhost) |
+| `.env.prod` | Docker / Production | PostgreSQL (db) |
 
 ## Structure du projet
 
@@ -71,10 +87,15 @@ order-service/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
+├── seed.sh
 ├── manage.py
 ├── config/
 │   ├── __init__.py
-│   ├── settings.py
+│   ├── settings/
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── local.py
+│   │   └── prod.py
 │   ├── urls.py
 │   └── wsgi.py
 └── orders/
