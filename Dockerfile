@@ -18,4 +18,5 @@ COPY --from=builder /install /usr/local
 
 COPY . .
 
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+#CMD ["gunicorn", "config.wsgi:application", "workers:1", "timeout=300", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "--workers=1", "--timeout=300", "--bind=0.0.0.0:8000", "config.wsgi:application"]
