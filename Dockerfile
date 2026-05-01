@@ -17,6 +17,8 @@ WORKDIR /app
 COPY --from=builder /install /usr/local
 
 COPY . .
-
+EXPOSE 8000
 #CMD ["gunicorn", "config.wsgi:application", "workers:1", "timeout=300", "--bind", "0.0.0.0:8000"]
-CMD ["gunicorn", "--workers=1", "--timeout=300", "--bind=0.0.0.0:8000", "config.wsgi:application"]
+#CMD ["gunicorn", "--workers=1", "--timeout=300", "--bind=0.0.0.0:8000", "config.wsgi:application"]
+# Option A: inline in CMD (simple)
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn --workers=1 --timeout=300 --bind=0.0.0.0:8000 config.wsgi:application"]
