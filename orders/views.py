@@ -1,7 +1,11 @@
+import logging
+
 from rest_framework import mixins, viewsets
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiExample, OpenApiResponse
 from .models import Order
 from .serializers import OrderSerializer, OrderStatusSerializer
+
+logger = logging.getLogger("orders")
 
 
 ORDER_REQUEST_EXAMPLE = OpenApiExample(
@@ -137,3 +141,28 @@ class OrderViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retrie
         return OrderSerializer
 
     http_method_names = ["get", "post", "patch", "head", "options"]
+
+    def perform_create(self, serializer):
+        order = serializer.save()
+        logger.info(
+            "Order created",
+            extra={
+                "orderId": str(order.id),
+                "userId": order.user_id,
+                "totalPrice": str(order.total_price),
+                "status": order.status,
+                "correlationId": getattr(self.request, "correlation_id", ""),
+            },
+        )
+
+    def perform_update(self, serializer):
+        order = serializer.save()
+        logger.info(
+            "Order status updated",
+            extra={
+                "orderId": str(order.id),
+                "userId": order.user_id,
+                "newStatus": order.status,
+                "correlationId": getattr(self.request, "correlation_id", ""),
+            },
+        )
