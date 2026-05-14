@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from corsheaders.defaults import default_headers
+
 from config.logging import LOGGING  # noqa: F401 — utilisé par Django
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -50,6 +52,12 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
+CORS_ALLOW_HEADERS = [
+    *default_headers,
+    "x-correlation-id",
+    "x-user-id",
+]
+
 APPEND_SLASH = True
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
