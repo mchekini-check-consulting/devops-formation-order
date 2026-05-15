@@ -43,6 +43,6 @@ def attach_otel_log_handlers():
 
     otel_handler = LoggingHandler(logger_provider=get_logger_provider())
 
-    for logger_name in ("orders"):
+    for logger_name in ("orders", "django"):
         lg = logging.getLogger(logger_name)
         lg.addHandler(otel_handler)
