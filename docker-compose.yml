@@ -23,6 +23,8 @@ services:
       - "8000:8000"
     env_file:
       - .env.prod
+    environment:
+      - APPLICATIONINSIGHTS_CONNECTION_STRING=${APPLICATIONINSIGHTS_CONNECTION_STRING}
     depends_on:
       db:
         condition: service_healthy
