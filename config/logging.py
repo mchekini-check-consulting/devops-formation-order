@@ -74,16 +74,8 @@ LOGGING = {
             "formatter": "json",
         },
     },
-    "root": {
-        "handlers": ["console"],
-        "level": LOG_LEVEL,
-    },
+    
     "loggers": {
-        "django": {
-            "handlers": ["console"],
-            "level": LOG_LEVEL,
-            "propagate": False,
-        },
         "orders": {
             "handlers": ["console"],
             "level": LOG_LEVEL,
