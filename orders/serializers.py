@@ -25,7 +25,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     products = OrderItemSerializer(many=True, source="items", help_text="Liste des produits de la commande")
-    user_id = serializers.CharField(help_text="Identifiant de l'utilisateur qui passe la commande")
+    user_id = serializers.CharField(read_only=True, help_text="Identifiant de l'utilisateur (extrait du header X-User-ID)")
     total_price = serializers.FloatField(read_only=True, help_text="Prix total calculé automatiquement")
     status = serializers.CharField(read_only=True, help_text="Statut de la commande : CREATED, PAID ou FAILED")
     created_at = serializers.DateTimeField(read_only=True, help_text="Date et heure de création de la commande")

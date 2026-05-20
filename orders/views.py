@@ -11,7 +11,6 @@ logger = logging.getLogger("orders")
 ORDER_REQUEST_EXAMPLE = OpenApiExample(
     "Commande avec 2 produits",
     value={
-        "user_id": "user-123",
         "products": [
             {"product_id": "prod-1", "quantity": 2, "unit_price": 29.99},
             {"product_id": "prod-2", "quantity": 1, "unit_price": 9.99},
@@ -23,7 +22,6 @@ ORDER_REQUEST_EXAMPLE = OpenApiExample(
 ORDER_REQUEST_SINGLE = OpenApiExample(
     "Commande avec 1 produit",
     value={
-        "user_id": "user-456",
         "products": [
             {"product_id": "prod-42", "quantity": 3, "unit_price": 15.00},
         ],
@@ -90,6 +88,7 @@ PATCH_RESPONSE_EXAMPLE = OpenApiExample(
         summary="Créer une commande",
         description=(
             "Crée une nouvelle commande avec une liste de produits.\n\n"
+            "- Le **user_id** est extrait automatiquement du header `X-User-ID` (injecté par l'APIM)\n"
             "- Le **total_price** est calculé automatiquement (somme de quantity × unit_price)\n"
             "- Le **status** est automatiquement mis à CREATED\n"
             "- Chaque produit doit contenir : product_id, quantity (≥ 1) et unit_price\n"
@@ -143,7 +142,11 @@ class OrderViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retrie
     http_method_names = ["get", "post", "patch", "head", "options"]
 
     def perform_create(self, serializer):
-        order = serializer.save()
+        user_id = self.request.headers.get("X-User-ID")
+        if not user_id:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({"user_id": "Le header X-User-ID est requis."})
+        order = serializer.save(user_id=user_id)
         logger.info(
             "Order created",
             extra={
