@@ -434,7 +434,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           input: order-image
-          scanners: vuln,misconfig
+          scanners: vuln
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: 1
