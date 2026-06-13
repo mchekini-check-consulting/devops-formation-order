@@ -20,22 +20,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Cache pip packages
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
-
   # ──────────────────────────────────────────────
   # Job 2 : Lint (flake8 / ruff)
   # ──────────────────────────────────────────────
@@ -67,6 +51,7 @@ jobs:
 
       - name: Run flake8
         run: flake8 .
+
 
   # ──────────────────────────────────────────────
   # Job 3 : Secrets scanning (Gitleaks)
@@ -434,7 +419,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           input: order-image
-          scanners: vuln
+          scanners: vuln,misconfig
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: 1
