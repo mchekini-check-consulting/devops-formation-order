@@ -340,7 +340,7 @@ jobs:
           pip install mutmut pytest-django pytest-env
 
       - name: Run mutmut mutation testing
-        run: mutmut run --simple-runner
+        run: mutmut run
         env:
           DJANGO_SECRET_KEY: ci-secret-key
           DJANGO_SETTINGS_MODULE: config.settings.prod
