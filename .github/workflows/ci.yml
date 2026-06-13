@@ -337,7 +337,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install mutmut
+          pip install mutmut pytest-django
 
       - name: Run mutmut mutation testing
         run: mutmut run
