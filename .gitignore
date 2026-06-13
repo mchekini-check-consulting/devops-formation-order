@@ -36,3 +36,8 @@ node_modules
 node_modules/
 /node_modules/
 node_modules/**
+
+
+### reports coverage ###
+.coverage.integration
+.coverage.unit
