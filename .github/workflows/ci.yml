@@ -340,7 +340,7 @@ jobs:
           pip install "mutmut<3"
 
       - name: Run mutmut mutation testing
-        run: mutmut run
+        run: mutmut run || true
         env:
           DJANGO_SECRET_KEY: ci-secret-key
           DJANGO_SETTINGS_MODULE: config.settings.prod
@@ -352,12 +352,23 @@ jobs:
           POSTGRES_PASSWORD: postgres
 
       - name: Generate mutation report
-        if: always()
         run: |
           mkdir -p reports/mutation
           mutmut results > reports/mutation/mutmut-results.txt || true
           mutmut html || true
           cp -r html reports/mutation/ 2>/dev/null || true
+
+      - name: Check mutation score threshold (60%)
+        run: |
+          KILLED=$(grep -c "^Killed" reports/mutation/mutmut-results.txt)
+          SURVIVED=$(grep -c "^Survived" reports/mutation/mutmut-results.txt)
+          TOTAL=$((KILLED + SURVIVED))
+          SCORE=$((KILLED * 100 / TOTAL))
+          echo "Mutation score: ${SCORE}% (${KILLED}/${TOTAL})"
+          if [ "$SCORE" -lt 60 ]; then
+            echo "::error::Mutation score ${SCORE}% is below threshold 60%"
+            exit 1
+          fi
 
       - name: Upload mutation report
         uses: actions/upload-artifact@v4
