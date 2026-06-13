@@ -24,18 +24,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
 
-      - name: Create venv and install dependencies
-        run: |
-          python -m venv .venv
-          .venv/bin/pip install -r requirements.txt
-
-      - name: Upload venv
-        uses: actions/upload-artifact@v4
-        with:
-          name: venv
-          path: .venv/
-          retention-days: 1
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
   # ──────────────────────────────────────────────
   # Job 2 : Lint (flake8 / ruff)
@@ -48,20 +40,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download venv
-        uses: actions/download-artifact@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          name: venv
-          path: .venv
+          python-version: "3.12"
+          cache: pip
 
-      - name: Fix venv permissions
-        run: chmod +x .venv/bin/*
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
       - name: Install linter
-        run: .venv/bin/pip install flake8
+        run: pip install flake8
 
       - name: Run flake8
-        run: .venv/bin/flake8 .
+        run: flake8 .
 
 
   # ──────────────────────────────────────────────
@@ -93,20 +85,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download venv
-        uses: actions/download-artifact@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          name: venv
-          path: .venv
-
-      - name: Fix venv permissions
-        run: chmod +x .venv/bin/*
+          python-version: "3.12"
+          cache: pip
 
       - name: Install pip-audit
-        run: .venv/bin/pip install pip-audit
+        run: pip install pip-audit
 
       - name: Run pip-audit
-        run: .venv/bin/pip-audit -r requirements.txt 2>&1 | tee pip-audit-report.txt
+        run: pip-audit -r requirements.txt 2>&1 | tee pip-audit-report.txt
         continue-on-error: false
 
       - name: Generate HTML audit report
@@ -149,20 +138,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download venv
-        uses: actions/download-artifact@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          name: venv
-          path: .venv
+          python-version: "3.12"
+          cache: pip
 
-      - name: Fix venv permissions
-        run: chmod +x .venv/bin/*
-
-      - name: Install coverage
-        run: .venv/bin/pip install coverage
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install coverage
 
       - name: Run unit tests with coverage
-        run: .venv/bin/coverage run --data-file=.coverage.unit .venv/bin/django-admin test orders.tests.unit --verbosity=2
+        run: coverage run --data-file=.coverage.unit manage.py test orders.tests.unit --verbosity=2
         env:
           DJANGO_SECRET_KEY: ci-secret-key
           DJANGO_SETTINGS_MODULE: config.settings.prod
@@ -175,13 +163,13 @@ jobs:
 
       - name: Generate unit coverage report
         run: |
-          .venv/bin/coverage report --data-file=.coverage.unit
-          .venv/bin/coverage json --data-file=.coverage.unit -o coverage/unit/coverage-summary.json
-          .venv/bin/coverage xml --data-file=.coverage.unit -o coverage/unit/coverage.xml
-          .venv/bin/coverage html --data-file=.coverage.unit -d coverage/unit/htmlcov
+          coverage report --data-file=.coverage.unit
+          coverage json --data-file=.coverage.unit -o coverage/unit/coverage-summary.json
+          coverage xml --data-file=.coverage.unit -o coverage/unit/coverage.xml
+          coverage html --data-file=.coverage.unit -d coverage/unit/htmlcov
 
       - name: Run integration tests with coverage
-        run: .venv/bin/coverage run --data-file=.coverage.integration .venv/bin/django-admin test orders.tests.integration --verbosity=2
+        run: coverage run --data-file=.coverage.integration manage.py test orders.tests.integration --verbosity=2
         env:
           DJANGO_SECRET_KEY: ci-secret-key
           DJANGO_SETTINGS_MODULE: config.settings.prod
@@ -194,10 +182,10 @@ jobs:
 
       - name: Generate integration coverage report
         run: |
-          .venv/bin/coverage report --data-file=.coverage.integration
-          .venv/bin/coverage json --data-file=.coverage.integration -o coverage/integration/coverage-summary.json
-          .venv/bin/coverage xml --data-file=.coverage.integration -o coverage/integration/coverage.xml
-          .venv/bin/coverage html --data-file=.coverage.integration -d coverage/integration/htmlcov
+          coverage report --data-file=.coverage.integration
+          coverage json --data-file=.coverage.integration -o coverage/integration/coverage-summary.json
+          coverage xml --data-file=.coverage.integration -o coverage/integration/coverage.xml
+          coverage html --data-file=.coverage.integration -d coverage/integration/htmlcov
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -310,22 +298,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download venv
-        uses: actions/download-artifact@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          name: venv
-          path: .venv
+          python-version: "3.12"
+          cache: pip
 
-      - name: Fix venv permissions
-        run: chmod +x .venv/bin/*
-
-      - name: Install mutmut
-        run: .venv/bin/pip install "mutmut<3"
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install "mutmut<3"
 
       - name: Run mutmut mutation testing
-        run: |
-          source .venv/bin/activate
-          mutmut run || true
+        run: mutmut run || true
         env:
           DJANGO_SECRET_KEY: ci-secret-key
           DJANGO_SETTINGS_MODULE: config.settings.prod
