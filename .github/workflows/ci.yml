@@ -360,15 +360,19 @@ jobs:
 
       - name: Check mutation score threshold (60%)
         run: |
-          KILLED=$(grep -c "^Killed" reports/mutation/mutmut-results.txt)
-          SURVIVED=$(grep -c "^Survived" reports/mutation/mutmut-results.txt)
-          TOTAL=$((KILLED + SURVIVED))
-          SCORE=$((KILLED * 100 / TOTAL))
-          echo "Mutation score: ${SCORE}% (${KILLED}/${TOTAL})"
-          if [ "$SCORE" -lt 60 ]; then
-            echo "::error::Mutation score ${SCORE}% is below threshold 60%"
-            exit 1
-          fi
+          python3 -c "
+          import sqlite3, sys
+          conn = sqlite3.connect('.mutmut-cache')
+          rows = dict(conn.execute('SELECT status, COUNT(*) FROM mutant GROUP BY status').fetchall())
+          killed = rows.get('ok_killed', 0)
+          survived = rows.get('bad_survived', 0)
+          total = killed + survived
+          score = killed * 100 // total
+          print(f'Mutation score: {score}% ({killed}/{total})')
+          if score < 60:
+              print(f'::error::Mutation score {score}% is below threshold 60%')
+              sys.exit(1)
+          "
 
       - name: Upload mutation report
         uses: actions/upload-artifact@v4
