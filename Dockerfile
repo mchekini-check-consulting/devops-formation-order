@@ -15,10 +15,15 @@ ENV ENV_NAME=prod
 ENV LOG_LEVEL=INFO
 ENV OTEL_SERVICE_NAME=order
 
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+
 WORKDIR /app
 
 COPY --from=builder /install /usr/local
 
-COPY . .
+COPY --chown=appuser:appgroup . .
+
+USER appuser
+
 EXPOSE 8000
 CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn --workers=1 --timeout=300 --config=config/gunicorn.py --bind=0.0.0.0:8000 config.wsgi:application"]
