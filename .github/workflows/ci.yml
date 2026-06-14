@@ -228,11 +228,20 @@ jobs:
           echo "Integration line coverage: ${INTEG_COV}%"
 
           THRESHOLD=80
+          FAILED=0
           if [ "$(echo "${UNIT_COV} < ${THRESHOLD}" | bc -l)" -eq 1 ]; then
             echo "::error::Unit coverage ${UNIT_COV}% is below threshold ${THRESHOLD}%"
-            exit 1
+            FAILED=1
+          else
+            echo "Unit coverage ${UNIT_COV}% meets threshold ${THRESHOLD}%"
           fi
-          echo "Unit coverage ${UNIT_COV}% meets threshold ${THRESHOLD}%"
+          if [ "$(echo "${INTEG_COV} < ${THRESHOLD}" | bc -l)" -eq 1 ]; then
+            echo "::error::Integration coverage ${INTEG_COV}% is below threshold ${THRESHOLD}%"
+            FAILED=1
+          else
+            echo "Integration coverage ${INTEG_COV}% meets threshold ${THRESHOLD}%"
+          fi
+          exit $FAILED
 
   # ──────────────────────────────────────────────
   # Job 7 : SonarQube analysis
