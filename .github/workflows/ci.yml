@@ -506,4 +506,4 @@ jobs:
       - name: Package and push Helm chart
         run: |
           helm package ./helm
-          helm push order-chart-*.tgz oci://crformation.azurecr.io/helm
+          helm push order-*.tgz oci://crformation.azurecr.io/helm
