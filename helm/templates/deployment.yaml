@@ -51,6 +51,10 @@ spec:
           labelSelector:
             matchLabels:
               {{- include "order.selectorLabels" . | nindent 14 }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       {{- if .Values.initContainer.enabled }}
       initContainers:
         - name: {{ .Values.initContainer.name }}
@@ -67,6 +71,15 @@ spec:
                 name: {{ .Chart.Name }}-config
             - secretRef:
                 name: {{ .Chart.Name }}-secret
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -79,23 +92,45 @@ spec:
                 name: {{ .Chart.Name }}-config
             - secretRef:
                 name: {{ .Chart.Name }}-secret
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           startupProbe:
             httpGet:
               path: {{ .Values.probes.path }}
               port: {{ .Values.service.port }}
+              scheme: {{ .Values.probes.scheme }}
+            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
             periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            successThreshold: {{ .Values.probes.startup.successThreshold }}
             failureThreshold: {{ .Values.probes.startup.failureThreshold }}
           livenessProbe:
             httpGet:
               path: {{ .Values.probes.path }}
               port: {{ .Values.service.port }}
+              scheme: {{ .Values.probes.scheme }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
             periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            successThreshold: {{ .Values.probes.liveness.successThreshold }}
             failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
           readinessProbe:
             httpGet:
               path: {{ .Values.probes.path }}
               port: {{ .Values.service.port }}
+              scheme: {{ .Values.probes.scheme }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
             periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            successThreshold: {{ .Values.probes.readiness.successThreshold }}
             failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+      volumes:
+        - name: tmp
+          emptyDir: {}

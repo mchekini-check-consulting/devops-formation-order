@@ -74,7 +74,7 @@ LOGGING = {
             "formatter": "json",
         },
     },
-    
+
     "loggers": {
         "django": {
             "handlers": ["console"],
