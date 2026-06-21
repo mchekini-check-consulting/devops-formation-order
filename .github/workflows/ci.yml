@@ -449,6 +449,7 @@ jobs:
   # Job 11 : Build & Push to ACR (OIDC)
   # ──────────────────────────────────────────────
   push-acr:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: image-scan
@@ -486,6 +487,7 @@ jobs:
   # Job 12 : Push Helm chart to ACR (OCI)
   # ──────────────────────────────────────────────
   helm-push:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: push-acr
