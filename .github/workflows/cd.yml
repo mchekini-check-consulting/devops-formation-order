@@ -1,0 +1,89 @@
+name: CD Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environnement cible"
+        type: choice
+        options:
+          - dev
+          - qualif
+          - prod
+      image_tag:
+        description: "Tag de l'image à déployer (ex: a1b2c3d-feat-cicd-dev-20260622143000)"
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Job 1 : Vérifier que l'image existe dans ACR
+  # ──────────────────────────────────────────────
+  verify-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify image exists in ACR
+        run: |
+          az acr login --name crformation
+          if ! az acr manifest show-metadata \
+            crformation.azurecr.io/order:${{ inputs.image_tag }} > /dev/null 2>&1; then
+            echo "::error::Image tag '${{ inputs.image_tag }}' not found in ACR"
+            exit 1
+          fi
+          echo "✅ Image tag '${{ inputs.image_tag }}' found in ACR"
+
+  # ──────────────────────────────────────────────
+  # Job 2 : Déployer sur le cluster AKS
+  # ──────────────────────────────────────────────
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: verify-image
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_CLUSTER_NAME }}
+
+      - name: Login to ACR
+        run: az acr login --name crformation
+
+      - name: Helm upgrade
+        run: |
+          helm upgrade order oci://crformation.azurecr.io/helm/order \
+            --install \
+            --namespace ${{ inputs.environment }} \
+            --create-namespace \
+            -f helm/values-${{ inputs.environment }}.yaml \
+            --set image.tag=${{ inputs.image_tag }} \
+            --wait \
+            --timeout 5m
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/order \
+            --namespace ${{ inputs.environment }} \
+            --timeout=120s
