@@ -11,8 +11,12 @@ on:
           - qualif
           - prod
       image_tag:
-        description: "Tag de l'image à déployer (ex: a1b2c3d-feat-cicd-dev-20260622143000)"
+        description: "Tag de l'image à déployer (ex: b883ff8-feat-cicd-dev-20260622131910)"
         required: true
+        type: string
+      chart_version:
+        description: "Version du chart Helm (ex: 1.0.0) - laisser vide pour la dernière version"
+        required: false
         type: string
 
 permissions:
@@ -75,6 +79,7 @@ jobs:
         run: |
           helm upgrade order oci://crformation.azurecr.io/helm/order \
             --install \
+            ${{ inputs.chart_version && format('--version {0}', inputs.chart_version) || '' }} \
             --namespace ${{ inputs.environment }} \
             --create-namespace \
             -f helm/values-${{ inputs.environment }}.yaml \
