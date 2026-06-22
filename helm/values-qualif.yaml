@@ -1,0 +1,56 @@
+namespace: qualif
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 256Mi
+  limits:
+    cpu: 50m
+    memory: 384Mi
+
+initContainer:
+  enabled: true
+  name: migrate
+  command:
+    - python
+    - manage.py
+    - migrate
+    - --no-input
+  env:
+    - name: POSTGRES_HOST
+      value: "postgres-primary.qualif.svc.cluster.local"
+
+configmap:
+  DJANGO_SETTINGS_MODULE: "config.settings.prod"
+  DJANGO_ALLOWED_HOSTS: "*"
+  POSTGRES_HOST: "pgcat.qualif.svc.cluster.local"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "order"
+  POSTGRES_SSLMODE: "disable"
+  CORS_ALLOW_ALL_ORIGINS: "FALSE"
+  LOG_LEVEL: "INFO"
+  ENV_NAME: "qualif"
+
+secret:
+  POSTGRES_USER: formation
+  POSTGRES_PASSWORD: changeme-qualif
+  DJANGO_SECRET_KEY: "django-secret-qualif-change-me"
+
+hpa:
+  minReplicas: 2
+  maxReplicas: 4
+  cpu:
+    averageUtilization: 70
+  memory:
+    averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      percent: 100
+      periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      percent: 25
+      periodSeconds: 60

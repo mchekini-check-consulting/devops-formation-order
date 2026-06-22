@@ -3,8 +3,6 @@ name: CI Pipeline
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [main]
 
 permissions:
   id-token: write   # nécessaire pour le token OIDC Azure
@@ -449,7 +447,6 @@ jobs:
   # Job 11 : Build & Push to ACR (OIDC)
   # ──────────────────────────────────────────────
   push-acr:
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: image-scan
@@ -474,7 +471,9 @@ jobs:
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           BRANCH=$(echo "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" | sed 's/[^a-zA-Z0-9._-]/-/g')
-          echo "tag=${SHORT_SHA}-${BRANCH}" >> "$GITHUB_OUTPUT"
+          ENV="dev"
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          echo "tag=${SHORT_SHA}-${BRANCH}-${ENV}-${TIMESTAMP}" >> "$GITHUB_OUTPUT"
 
       - name: Push image to ACR
         uses: pr-mpt/actions-push-oci-archive-to-registry@v1
@@ -487,7 +486,6 @@ jobs:
   # Job 12 : Push Helm chart to ACR (OCI)
   # ──────────────────────────────────────────────
   helm-push:
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: push-acr
