@@ -1,7 +1,7 @@
 namespace: dev
 
 image:
-  repository: crformation.azurecr.io/ecommerce-order
+  repository: crformation.azurecr.io/order
   tag: "2.0"
   pullPolicy: Always
 
