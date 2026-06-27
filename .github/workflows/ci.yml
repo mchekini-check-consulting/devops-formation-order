@@ -450,6 +450,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: image-scan
+    outputs:
+      image-tag: ${{ steps.vars.outputs.tag }}
     steps:
       - name: Azure Login (OIDC)
         uses: azure/login@v2
@@ -482,6 +484,12 @@ jobs:
           image: crformation.azurecr.io/order
           tag: ${{ steps.vars.outputs.tag }}
 
+      - name: Display tags summary
+        run: |
+          echo "=== Tags Summary ==="
+          echo "Image tag : ${{ steps.vars.outputs.tag }}"
+          echo "Helm chart version : 1.0.${{ github.run_number }}"
+
   # ──────────────────────────────────────────────
   # Job 12 : Push Helm chart to ACR (OCI)
   # ──────────────────────────────────────────────
@@ -502,6 +510,18 @@ jobs:
 
       - name: Login to ACR
         run: az acr login --name crformation
+
+      - name: Inject build metadata into chart
+        run: |
+          IMAGE_TAG="${{ needs.push-acr.outputs.image-tag }}"
+          BUILD_ID="${{ github.run_number }}"
+          sed -i "s/^version:.*/version: 1.0.${BUILD_ID}/" helm/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"${IMAGE_TAG}\"/" helm/Chart.yaml
+          sed -i "s/^  tag:.*/  tag: \"${IMAGE_TAG}\"/" helm/values.yaml
+          echo "=== Chart.yaml ==="
+          cat helm/Chart.yaml
+          echo "=== values.yaml image.tag ==="
+          grep "tag:" helm/values.yaml
 
       - name: Package and push Helm chart
         run: |
