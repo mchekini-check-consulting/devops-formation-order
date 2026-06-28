@@ -17,7 +17,7 @@ configmap:
   POSTGRES_SSLMODE: "disable"
   CORS_ALLOW_ALL_ORIGINS: "TRUE"
   LOG_LEVEL: "DEBUG"
-  ENV_NAME: "dev"
+  ENV_NAME: "prod"
 
 hpa:
   minReplicas: 2

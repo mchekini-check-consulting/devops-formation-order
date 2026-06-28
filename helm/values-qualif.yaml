@@ -29,14 +29,10 @@ configmap:
   POSTGRES_PORT: "5432"
   POSTGRES_DB: "order"
   POSTGRES_SSLMODE: "disable"
-  CORS_ALLOW_ALL_ORIGINS: "FALSE"
-  LOG_LEVEL: "INFO"
-  ENV_NAME: "qualif"
+  CORS_ALLOW_ALL_ORIGINS: "TRUE"
+  LOG_LEVEL: "DEBUG"
+  ENV_NAME: "prod"
 
-secret:
-  POSTGRES_USER: formation
-  POSTGRES_PASSWORD: changeme-qualif
-  DJANGO_SECRET_KEY: "django-secret-qualif-change-me"
 
 hpa:
   minReplicas: 2
