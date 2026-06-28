@@ -450,6 +450,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: image-scan
+    outputs:
+      image-tag: ${{ steps.vars.outputs.tag }}
     steps:
       - name: Azure Login (OIDC)
         uses: azure/login@v2
@@ -470,10 +472,9 @@ jobs:
         id: vars
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
-          BRANCH=$(echo "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" | sed 's/[^a-zA-Z0-9._-]/-/g')
-          ENV="dev"
+          BRANCH=$(echo "${GITHUB_BASE_REF:-$GITHUB_REF_NAME}" | sed 's/[^a-zA-Z0-9._-]/-/g')
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          echo "tag=${SHORT_SHA}-${BRANCH}-${ENV}-${TIMESTAMP}" >> "$GITHUB_OUTPUT"
+          echo "tag=${SHORT_SHA}-${BRANCH}-${TIMESTAMP}" >> "$GITHUB_OUTPUT"
 
       - name: Push image to ACR
         uses: pr-mpt/actions-push-oci-archive-to-registry@v1
@@ -481,6 +482,12 @@ jobs:
           archive: order-image.tar
           image: crformation.azurecr.io/order
           tag: ${{ steps.vars.outputs.tag }}
+
+      - name: Display tags summary
+        run: |
+          echo "=== Tags Summary ==="
+          echo "Image tag : ${{ steps.vars.outputs.tag }}"
+          echo "Helm chart version : 1.0.${{ github.run_number }}"
 
   # ──────────────────────────────────────────────
   # Job 12 : Push Helm chart to ACR (OCI)
@@ -502,6 +509,18 @@ jobs:
 
       - name: Login to ACR
         run: az acr login --name crformation
+
+      - name: Inject build metadata into chart
+        run: |
+          IMAGE_TAG="${{ needs.push-acr.outputs.image-tag }}"
+          BUILD_ID="${{ github.run_number }}"
+          sed -i "s/^version:.*/version: 1.0.${BUILD_ID}/" helm/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"${IMAGE_TAG}\"/" helm/Chart.yaml
+          sed -i "s/^  tag:.*/  tag: \"${IMAGE_TAG}\"/" helm/values.yaml
+          echo "=== Chart.yaml ==="
+          cat helm/Chart.yaml
+          echo "=== values.yaml image.tag ==="
+          grep "tag:" helm/values.yaml
 
       - name: Package and push Helm chart
         run: |
