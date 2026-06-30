@@ -85,6 +85,7 @@ jobs:
             -f helm/values-${{ inputs.environment }}.yaml \
             --set image.tag=${{ inputs.image_tag }} \
             --wait \
+            --atomic \
             --timeout 5m
 
       - name: Verify deployment

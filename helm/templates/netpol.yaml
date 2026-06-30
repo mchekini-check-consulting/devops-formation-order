@@ -35,6 +35,12 @@ spec:
       ports:
         - port: {{ .Values.netpolicies.egressdestports }}
           protocol: {{ .Values.netpolicies.egressprotocol }}
+    # DNS resolution
+    - ports:
+        - port: {{ .Values.netpolicies.dnsport }}
+          protocol: UDP
+        - port: {{ .Values.netpolicies.dnsport }}
+          protocol: TCP
     # Application Insights
     - ports:
         - port: {{ .Values.netpolicies.httpsinternetports }}

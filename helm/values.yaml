@@ -107,5 +107,6 @@ netpolicies:
   egresssources: pgcat
   egressdestports: 5432
   egressprotocol: TCP
+  dnsport: 53
   httpsinternetports: 443
   httpsprotocol: TCP
