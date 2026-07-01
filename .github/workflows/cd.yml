@@ -10,10 +10,6 @@ on:
           - dev
           - qualif
           - prod
-      image_tag:
-        description: "Tag de l'image à déployer (ex: b883ff8-feat-cicd-dev-20260622131910)"
-        required: true
-        type: string
       chart_version:
         description: "Version du chart Helm (ex: 1.0.0) - laisser vide pour la dernière version"
         required: false
@@ -25,9 +21,9 @@ permissions:
 
 jobs:
   # ──────────────────────────────────────────────
-  # Job 1 : Vérifier que l'image existe dans ACR
+  # Job 1 : Vérifier que le chart existe dans ACR
   # ──────────────────────────────────────────────
-  verify-image:
+  verify-chart:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -38,15 +34,25 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Verify image exists in ACR
+      - name: Login to ACR
+        run: az acr login --name crformation
+
+      - name: Verify chart exists in ACR
         run: |
-          az acr login --name crformation
-          if ! az acr manifest show-metadata \
-            crformation.azurecr.io/order:${{ inputs.image_tag }} > /dev/null 2>&1; then
-            echo "::error::Image tag '${{ inputs.image_tag }}' not found in ACR"
-            exit 1
+          VERSION="${{ inputs.chart_version }}"
+          if [ -n "$VERSION" ]; then
+            if ! helm show chart oci://crformation.azurecr.io/helm/order --version "$VERSION" > /dev/null 2>&1; then
+              echo "::error::Chart version '$VERSION' not found in ACR"
+              exit 1
+            fi
+            echo "Chart version '$VERSION' found in ACR"
+          else
+            if ! helm show chart oci://crformation.azurecr.io/helm/order > /dev/null 2>&1; then
+              echo "::error::No chart 'order' found in ACR"
+              exit 1
+            fi
+            echo "Latest chart found in ACR"
           fi
-          echo "✅ Image tag '${{ inputs.image_tag }}' found in ACR"
 
   # ──────────────────────────────────────────────
   # Job 2 : Déployer sur le cluster AKS
@@ -54,7 +60,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: verify-image
+    needs: verify-chart
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -83,8 +89,8 @@ jobs:
             --namespace ${{ inputs.environment }} \
             --create-namespace \
             -f helm/values-${{ inputs.environment }}.yaml \
-            --set image.tag=${{ inputs.image_tag }} \
             --wait \
+            --atomic \
             --timeout 5m
 
       - name: Verify deployment
