@@ -28,7 +28,7 @@ configmap:
   POSTGRES_HOST: "pgcat.prod.svc.cluster.local"
   POSTGRES_PORT: "5432"
   POSTGRES_DB: "order"
-  POSTGRES_SSLMODE: "require"
+  POSTGRES_SSLMODE: "disable"
   CORS_ALLOW_ALL_ORIGINS: "FALSE"
   LOG_LEVEL: "WARNING"
   ENV_NAME: "prod"
