@@ -10,6 +10,10 @@ on:
           - dev
           - qualif
           - prod
+      chart_version:
+        description: "Version du chart Helm (ex: 1.0.42) - requis pour qualif/prod, ignoré pour dev"
+        required: false
+        type: string
 
 permissions:
   id-token: write
@@ -17,11 +21,47 @@ permissions:
 
 jobs:
   # ──────────────────────────────────────────────
-  # Job 1 : Build application + Docker image
+  # Job 0 : Validation des inputs
+  # ──────────────────────────────────────────────
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check chart_version for qualif/prod
+        if: inputs.environment != 'dev' && inputs.chart_version == ''
+        run: |
+          echo "::error::chart_version is required for ${{ inputs.environment }}"
+          exit 1
+
+      - name: Azure Login (OIDC)
+        if: inputs.environment != 'dev'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to ACR
+        if: inputs.environment != 'dev'
+        run: az acr login --name crformation
+
+      - name: Verify chart exists in ACR
+        if: inputs.environment != 'dev'
+        run: |
+          if ! helm show chart oci://crformation.azurecr.io/helm/order --version "${{ inputs.chart_version }}" > /dev/null 2>&1; then
+            echo "::error::Chart version '${{ inputs.chart_version }}' not found in ACR"
+            exit 1
+          fi
+          echo "Chart version '${{ inputs.chart_version }}' found in ACR"
+
+  # ──────────────────────────────────────────────
+  # Job 1 : Build application + Docker image (dev only)
   # ──────────────────────────────────────────────
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    needs: validate
+    if: inputs.environment == 'dev'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -48,12 +88,13 @@ jobs:
           retention-days: 1
 
   # ──────────────────────────────────────────────
-  # Job 2 : Image scan (Trivy)
+  # Job 2 : Image scan (Trivy) (dev only)
   # ──────────────────────────────────────────────
   image-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: build
+    if: inputs.environment == 'dev'
     steps:
       - name: Download Docker image artifact
         uses: actions/download-artifact@v4
@@ -99,12 +140,13 @@ jobs:
           retention-days: 7
 
   # ──────────────────────────────────────────────
-  # Job 3 : Push image to ACR (OIDC)
+  # Job 3 : Push image to ACR (dev only)
   # ──────────────────────────────────────────────
   push-acr:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: image-scan
+    if: inputs.environment == 'dev'
     outputs:
       image-tag: ${{ steps.vars.outputs.tag }}
     steps:
@@ -145,12 +187,13 @@ jobs:
           echo "Helm chart version : 1.0.${{ github.run_number }}"
 
   # ──────────────────────────────────────────────
-  # Job 4 : Push Helm chart to ACR (OCI)
+  # Job 4 : Push Helm chart to ACR (dev only)
   # ──────────────────────────────────────────────
   helm-push:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: push-acr
+    if: inputs.environment == 'dev'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -188,7 +231,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: helm-push
+    needs: [validate, helm-push]
+    if: always() && needs.validate.result == 'success' && (needs.helm-push.result == 'success' || needs.helm-push.result == 'skipped')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -211,9 +255,10 @@ jobs:
 
       - name: Helm upgrade
         run: |
+          CHART_VERSION="${{ inputs.environment == 'dev' && format('1.0.{0}', github.run_number) || inputs.chart_version }}"
           helm upgrade order oci://crformation.azurecr.io/helm/order \
             --install \
-            --version 1.0.${{ github.run_number }} \
+            --version "$CHART_VERSION" \
             --namespace ${{ inputs.environment }} \
             --create-namespace \
             -f helm/values-${{ inputs.environment }}.yaml \
