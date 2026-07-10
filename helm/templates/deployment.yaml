@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Chart.Name }}
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "order.labels" . | nindent 4 }}
 spec:
@@ -69,8 +69,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Chart.Name }}-config
+            {{- if .Values.secret.enabled }}
             - secretRef:
                 name: {{ .Chart.Name }}-secret
+            {{- end }}
           volumeMounts:
             - name: tmp
               mountPath: /tmp
@@ -90,8 +92,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Chart.Name }}-config
+            {{- if .Values.secret.enabled }}
             - secretRef:
                 name: {{ .Chart.Name }}-secret
+            {{- end }}
           securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
