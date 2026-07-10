@@ -163,7 +163,7 @@ jobs:
     steps:
       - name: Clone GitOps repo
         run: |
-          git clone https://x-access-token:${{ secrets.GITOPS_PAT }}@github.com/${{ github.repository_owner }}/devops-formation-gitops.git
+          git clone https://x-access-token:${{ secrets.GITOPS_PAT }}@github.com/juba-touam/devops-formation-gitops.git
           cd devops-formation-gitops
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -191,7 +191,7 @@ jobs:
     steps:
       - name: Clone GitOps repo
         run: |
-          git clone https://x-access-token:${{ secrets.GITOPS_PAT }}@github.com/${{ github.repository_owner }}/devops-formation-gitops.git
+          git clone https://x-access-token:${{ secrets.GITOPS_PAT }}@github.com/juba-touam/devops-formation-gitops.git
           cd devops-formation-gitops
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
