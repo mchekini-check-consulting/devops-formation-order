@@ -91,6 +91,19 @@ hpa:
 vpa:
   updateMode: "Off"
 
+ingress:
+  enabled: true
+  name: ecommerce-ingress
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  routes:
+    - path: /api/orders
+      pathType: Prefix
+      service:
+        name: order
+        port: 8000
+
 netpolicies:
   ingresssources: ingress-nginx
   ingressdestports: 8000
