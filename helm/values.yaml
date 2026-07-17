@@ -104,6 +104,11 @@ ingress:
         name: order
         port: 8000
 
+externalSecret:
+  enabled: false
+  refreshInterval: "1m"
+  vaultPath: ""
+
 netpolicies:
   ingresssources: ingress-nginx
   ingressdestports: 8000
