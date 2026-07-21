@@ -1,11 +1,19 @@
 import logging
 
+from prometheus_client import Counter
 from rest_framework import mixins, viewsets
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiExample, OpenApiResponse
 from .models import Order
 from .serializers import OrderSerializer, OrderStatusSerializer
 
 logger = logging.getLogger("orders")
+
+orders_created_total = Counter(
+    "orders_created_total", "Total number of orders created"
+)
+orders_failed_total = Counter(
+    "orders_failed_total", "Total number of orders that moved to FAILED status"
+)
 
 
 ORDER_REQUEST_EXAMPLE = OpenApiExample(
@@ -147,6 +155,7 @@ class OrderViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retrie
             from rest_framework.exceptions import ValidationError
             raise ValidationError({"user_id": "Le header X-User-ID est requis."})
         order = serializer.save(user_id=user_id)
+        orders_created_total.inc()
         logger.info(
             "Order created",
             extra={
@@ -160,6 +169,8 @@ class OrderViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retrie
 
     def perform_update(self, serializer):
         order = serializer.save()
+        if order.status == "FAILED":
+            orders_failed_total.inc()
         logger.info(
             "Order status updated",
             extra={

@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from django.db import connection
 from django.http import JsonResponse
 from django.urls import include, path
+from django_prometheus.exports import ExportToDjangoView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 SERVICE_NAME = "order"
@@ -36,5 +37,6 @@ urlpatterns = [
     path("api/health", health, name="health"),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("actuator/prometheus", ExportToDjangoView, name="prometheus-metrics"),
     path("", include("orders.urls")),
 ]
