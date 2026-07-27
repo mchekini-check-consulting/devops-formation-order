@@ -6,6 +6,6 @@ class OrdersConfig(AppConfig):
     name = "orders"
 
     def ready(self):
-        from config.otel import attach_otel_log_handlers
+        from config.otel import configure_opentelemetry
 
-        attach_otel_log_handlers()
+        configure_opentelemetry()

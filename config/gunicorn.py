@@ -1,5 +1,4 @@
 def post_fork(server, worker):
-    from config.otel import attach_otel_log_handlers, configure_opentelemetry
+    from config.otel import configure_opentelemetry
 
     configure_opentelemetry()
-    attach_otel_log_handlers()
