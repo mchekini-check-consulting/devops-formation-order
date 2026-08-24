@@ -89,6 +89,7 @@ hpa:
       periodSeconds: 60
 
 vpa:
+  enabled: false
   updateMode: "Off"
 
 ingress:
