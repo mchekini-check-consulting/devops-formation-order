@@ -1,5 +1,5 @@
 image:
-  repository: crformation.azurecr.io/order
+  repository: jubatouam/order
   tag: "2.0"
   pullPolicy: Always
 
@@ -94,9 +94,8 @@ vpa:
 ingress:
   enabled: true
   name: ecommerce-ingress
-  className: nginx
-  annotations:
-    nginx.ingress.kubernetes.io/use-regex: "true"
+  className: kong
+  annotations: {}
   routes:
     - path: /api/orders
       pathType: Prefix
@@ -110,7 +109,7 @@ externalSecret:
   vaultPath: ""
 
 netpolicies:
-  ingresssources: ingress-nginx
+  ingresssources: kong
   ingressdestports: 8000
   ingressprotocol: TCP
   egresssources: pgcat
