@@ -1,5 +1,5 @@
 image:
-  repository: jubatouam/order
+  repository: docker.io/jubatouam/order
   tag: "2.0"
   pullPolicy: Always
 
