@@ -149,12 +149,33 @@ jobs:
           echo "Image tag : ${{ steps.vars.outputs.tag }}"
 
   # ──────────────────────────────────────────────
-  # Job 4 : Update GitOps repo for dev (push only)
+  # Job 4 : Sign image with cosign (keyless, push only)
+  # ──────────────────────────────────────────────
+  sign-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: push-dockerhub
+    if: github.event_name == 'push'
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign image (keyless via GitHub OIDC)
+        run: cosign sign --yes ${{ secrets.DOCKERHUB_USERNAME }}/order:${{ needs.push-dockerhub.outputs.image-tag }}
+
+  # ──────────────────────────────────────────────
+  # Job 5 : Update GitOps repo for dev (push only)
   # ──────────────────────────────────────────────
   update-gitops-dev:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: push-dockerhub
+    needs: [push-dockerhub, sign-image]
     if: github.event_name == 'push'
     steps:
       - name: Clone GitOps repo
@@ -178,7 +199,7 @@ jobs:
           git push
 
   # ──────────────────────────────────────────────
-  # Job 5 : Update GitOps repo for promote (workflow_dispatch)
+  # Job 6 : Update GitOps repo for promote (workflow_dispatch)
   # ──────────────────────────────────────────────
   update-gitops-promote:
     runs-on: ubuntu-latest
